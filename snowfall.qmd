@@ -1,0 +1,359 @@
+---
+title: "❄️ Anchorage Snowfall"
+format: 
+  html:
+    toc: true
+    embed-resources: true
+    theme: zephyr
+date: "`r Sys.Date()`"
+
+---
+
+
+
+<!-- {{include-in-header }} -->
+
+
+<!-- <link rel="preconnect" href="https://fonts.googleapis.com"> -->
+<!-- <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> -->
+<!-- <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&family=IBM+Plex+Mono:ital,wght@0,200;0,400;0,600;0,700;1,400&family=Inter:wght@600;800&display=swap" rel="stylesheet"> -->
+
+
+```{css, echo = FALSE}
+* {font-family: "Fira Code";
+
+}
+
+h1,h2,h3,h4,h5,h6{
+
+font-family: "Inter"
+
+}
+
+```
+
+## Anchorage Ted Stevens International Airport Snowfall 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = F, fig.asp = .8, fig.width = 10)
+
+
+
+
+# 
+# install.packages('readr')
+# install.packages('dplyr')
+# install.packages('readr')
+# install.packages('stringr')
+# install.packages('janitor')
+# install.packages('jsonlite')
+# install.packages('ggplot2')
+# install.packages('lubridate')
+# install.packages('directlabels')
+# install.packages('purr')
+# install.packages('gghighlight')
+# install.packages('plotly')
+# install.packages('knitr')
+# install.packages('httr')
+# install.packages("curl")
+
+
+
+library(tidyr)
+library(dplyr)
+library(readr)
+library(stringr)
+library(janitor)
+library(jsonlite)
+library(ggplot2)
+library(lubridate)
+library(directlabels)
+# library(dataRetrieval)
+library(purrr)
+library(gghighlight)
+library(plotly)
+# library(ggthemr)
+# library(RColorBrewer)
+library(knitr)
+library(httr)
+
+
+# 
+# setwd("projects/iditarod-rest")
+# setwd("/")
+options(scipen=999)
+getwd()
+
+
+# source("../ggplot_theme/ben_theme.R")
+
+
+```
+
+
+
+
+<!-- ## Read in Historic Data -->
+
+```{r}
+
+hx_files <- list.files("data/historic",full.names = T )
+hx_files <- as.list(hx_files)
+
+
+hx <- lapply(hx_files, read_csv) %>% bind_rows()
+hx <- hx %>% clean_names()
+
+hx <- hx %>% select(-name, -mdpr, -dapr, -prcp)
+
+hx <- hx %>% relocate(date)
+hx <- hx %>% filter (date<'2024-01-01')
+
+# 
+# write_csv(hx, "hx.csv")
+# write_json(hx, "hx.json")
+
+```
+
+
+
+```{r}
+
+
+
+
+
+##old
+daily_url_2024 <- "https://www.ncei.noaa.gov/cdo-web/api/v2/data/?datasetid=GHCND&stationid=GHCND:USW00026451&startdate=2024-01-01&enddate=2024-12-31&limit=999&datatypeid=SNOW&datatypeid=SNWD&units=standard"
+
+
+daily_raw_24 <- httr::GET(daily_url_2024,add_headers( "token" = "faXCJntxwbKXOeuoFQazeGxtGykRnsQm"
+) )
+
+daily_content_24 <- content(daily_raw_24)
+
+daily_df_24 <- bind_rows(daily_content_24$results)
+
+snow_24 <- daily_df_24 %>% filter (datatype %in% c("SNOW", "SNWD"))
+snow_24_wide <- snow_24 %>% pivot_wider( names_from   = datatype)
+# snow_24_wide <- snow_24_wide %>% select(-resultset,-attributes)
+snow_24_wide <- snow_24_wide %>% select(-attributes)
+snow_24_wide <- snow_24_wide %>% clean_names()
+
+
+
+
+daily_url_2025 <- "https://www.ncei.noaa.gov/cdo-web/api/v2/data/?datasetid=GHCND&stationid=GHCND:USW00026451&startdate=2025-01-01&enddate=2025-12-31&limit=999&datatypeid=SNOW&datatypeid=SNWD&units=standard"
+
+
+
+daily_raw_25 <- httr::GET(daily_url_2025,add_headers( "token" = "faXCJntxwbKXOeuoFQazeGxtGykRnsQm"
+) )
+
+daily_content_25 <- content(daily_raw_25)
+
+daily_df_25 <- bind_rows(daily_content_25$results)
+
+snow_25 <- daily_df_25 %>% filter (datatype %in% c("SNOW", "SNWD"))
+snow_25_wide <- snow_25 %>% pivot_wider( names_from   = datatype)
+# snow_25_wide <- snow_25_wide %>% select(-resultset,-attributes)
+snow_25_wide <- snow_25_wide %>% select(-attributes)
+snow_25_wide <- snow_25_wide %>% clean_names()
+
+
+
+```
+
+
+
+```{r}
+
+
+snow <- rbind(hx, snow_24_wide, snow_25_wide)
+
+snow <- snow %>% distinct()
+
+
+
+snow <- snow %>% mutate(date = date(date))
+snow <- snow %>% mutate(year = year(date))
+snow <- snow %>% mutate(month= month(date))
+snow <- snow %>% mutate(previous_year = year-1)
+snow <- snow %>% mutate(next_year = year+1)
+
+
+
+
+# add julian date
+snow <- snow %>% mutate(date_julian = yday(date))
+
+## date 2000
+snow <- snow %>% mutate(date_string = paste0(date))
+snow <- snow %>% mutate(date_part = substr(date, 6,10))
+snow <- snow %>% mutate(date_month = substr(date, 6,7))
+
+snow  <-  snow %>% filter(month %in% c(1,2,3,4,5,9,10,11,12))
+snow <- snow %>% select(-station)
+
+# snow <- snow %>% mutate(date_2000 = ifelse(date_month %in% c('10', '11', '12'), paste0("2000-", date_part), paste0("2001-", date_part) ))
+# snow <- snow %>% mutate(season = ifelse(date_month %in% c('9','10', '11', '12'), "fall", "spring"))
+snow <- snow %>% mutate(season = ifelse(month %in% c(9,10,11,12), "fall", "spring"))
+# snow <- snow %>% mutate(date_2000 = paste0("2000-", date_part))
+
+
+snow <- snow %>% mutate (winter_season = ifelse(season=="fall", paste0(year, "-", next_year ), paste0(previous_year,"-", year ) ))
+
+##establish a start date for each year. 
+
+
+snow <- snow %>% mutate(snow_year_start_year = ifelse(season =="fall", year, previous_year))
+
+snow <- snow %>% mutate(snow_year_start_date = paste0(snow_year_start_year, "-09-01"))
+
+
+##caluclate the number of DAYS since the statrt date
+
+snow <- snow %>% mutate(snow_year_interval = interval(start=snow_year_start_date, end=date ))
+
+snow <- snow %>% mutate(snow_year_period = as.period(snow_year_interval, units="days" ))
+
+snow <- snow %>% mutate(snow_year_day_dt = difftime( date, snow_year_start_date, units="days") )
+
+
+
+# snow <- snow %>% mutate(snow_year_days= days(snow_year_period) )
+
+
+
+# snow <- snow %>% mutate(date_2000_date = ymd(date_2000))
+
+
+
+### calculate running snowfall total: 
+
+
+
+snow <- snow %>% arrange(date)
+
+
+## add decades 
+
+snow <- snow %>% mutate (decade=(year %/% 10) *10)
+
+## find NAs
+
+snow_na <- snow %>% filter (is.na(snow))
+snow <- snow %>% filter (!is.na(snow))
+
+
+snow <- snow %>% group_by(winter_season) %>% mutate (snow_rolling = cumsum(snow)) %>% ungroup()
+
+# 2023-2024
+
+```
+
+```{r}
+latest_date <- max(snow$date)
+
+## top 10 winters
+
+
+snow_summary <- snow %>% group_by(winter_season) %>%  summarize(max_cumulative = max(snow_rolling), min_cumulative = min(snow_rolling)) %>% ungroup()
+
+
+snow_top_10 <- snow_summary %>% top_n(10, max_cumulative) %>% arrange(-max_cumulative)
+
+snow_smallest_10 <- snow_summary %>% slice_min( min_cumulative, n=10) %>% arrange(min_cumulative)
+
+```
+
+
+The latest date in the snow data is `r paste0(latest_date)`
+This report was run `r today()`
+
+```{r}
+kable(snow_top_10)
+kable(snow_smallest_10)
+
+```
+
+
+
+## 2024-2025 in Anchorage cumulative snowfall compared to winters since 1952.
+
+```{r}
+
+ggplot(snow %>% filter(month!= 99))+
+  geom_line(aes(x=snow_year_day_dt, y=snow_rolling, group=winter_season, color=winter_season), show.legend = F)+
+  # gghighlight(winter_season == '2023-2024')+
+  gghighlight(winter_season == '2024-2025')+
+  ggtitle("Winter 2024-2025")+
+  theme_minimal()
+
+```
+## Interactive Plot
+```{r}
+
+all_years_plot <- ggplot(snow %>% filter(month!= 5))+
+  geom_line(aes(x=snow_year_day_dt, y=snow_rolling, group=winter_season, color=factor(decade)), show.legend = F)+
+  theme_minimal()+
+  theme(legend.position='none') 
+
+
+ggplotly(all_years_plot, tooltip = c("snow_year_day_dt", "snow_rolling", "winter_season"))
+
+```
+
+
+
+
+## 2023-2024 Anchorage snow depth compared to winters since 1952.
+
+```{r}
+
+ggplot(snow)+
+  geom_line(aes(x=snow_year_day_dt, y=snwd, group=winter_season, color=winter_season), show.legend = F)+
+    gghighlight(winter_season == '2023-2024')+
+  theme_minimal()+
+   scale_color_brewer(palette = "Dark2")
+
+```
+
+
+
+## 2023-2024 Anchorage snow depth by decades since 1952.
+
+```{r}
+
+ggplot(snow %>% filter(month!= 5))+
+  geom_line(aes(x=snow_year_day_dt, y=snow_rolling, group=winter_season, color=decade), show.legend = F)+
+  theme_minimal()
+  # scale_color_brewer(palette = "PuBu")
+
+```
+
+## 2023-2024 Anchorage snow cumulative compared to the top 10 winters
+
+```{r}
+
+ggplot(snow %>% filter (winter_season %in% snow_top_10$winter_season))+
+  geom_line(aes(x=snow_year_day_dt, y=snow_rolling, group=winter_season, color=winter_season), show.legend = F)+
+    gghighlight(winter_season == '2023-2024')+
+  theme_minimal()
+
+```
+
+
+
+
+
+## Decade Facets 
+
+```{r}
+
+ggplot(snow %>% filter(month!= 5))+
+  geom_line(aes(x=snow_year_day_dt, y=snow_rolling, group=winter_season, color=decade), show.legend = F)+
+  theme_minimal()+
+  facet_wrap(~decade)
+
+```

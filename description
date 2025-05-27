@@ -1,0 +1,17 @@
+Title: Snowfall dependencies
+Description: This is not a package, but we just use this file to declare
+    the dependencies of the site.
+URL: https://r-pkgs.org/
+Imports:
+    tidyr,
+    dplyr,
+    readr,
+    stringr,
+    janitor,
+    jsonlite,
+    ggplot2,
+    lubridate,
+    directlabels,
+    purrr,
+    gghighlight,
+    plotly
