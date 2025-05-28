@@ -20,6 +20,10 @@ jobs:
       with:
         r-version: '4.5.0'
 
+    - uses: r-lib/actions/setup-r-dependencies@v2
+      with:
+        cache-version: 1
+
     - uses: quarto-dev/quarto-actions/setup@v2
       with:
         version: 1.4.515
