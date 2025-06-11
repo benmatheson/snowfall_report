@@ -1,5 +1,5 @@
 ---
-title: "❄📊️ Anchorage Snowfall"
+title: "❄📊️☃️️ Anchorage Snowfall"
 format: 
   html:
     toc: true
@@ -142,21 +142,21 @@ daily_raw_24 <- httr::GET(daily_url_2024,add_headers( "token" = WXTOKEN
 ) )
 
 
-print("daily_raw_24")
-print(daily_raw_24)
+# print("daily_raw_24")
+# print(daily_raw_24)
 
 daily_content_24 <- content(daily_raw_24)
 
 
-print("dialy content 24")
-print(daily_content_24)
+# print("dialy content 24")
+# print(daily_content_24)
 
 
 daily_df_24 <- bind_rows(daily_content_24$results)
 
 
-print("daily_df_24")
-print(daily_df_24)
+# print("daily_df_24")
+# print(daily_df_24)
 
 snow_24 <- daily_df_24 %>% filter (datatype %in% c("SNOW", "SNWD"))
 snow_24_wide <- snow_24 %>% pivot_wider( names_from   = datatype)
