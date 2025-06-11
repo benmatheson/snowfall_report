@@ -123,6 +123,14 @@ hx <- hx %>% filter (date<'2024-01-01')
 ```{r}
 
 
+wxToken <- Sys.getenv("WXTOKEN")
+
+```
+
+
+```{r}
+
+
 
 
 
@@ -130,7 +138,7 @@ hx <- hx %>% filter (date<'2024-01-01')
 daily_url_2024 <- "https://www.ncei.noaa.gov/cdo-web/api/v2/data/?datasetid=GHCND&stationid=GHCND:USW00026451&startdate=2024-01-01&enddate=2024-12-31&limit=999&datatypeid=SNOW&datatypeid=SNWD&units=standard"
 
 
-daily_raw_24 <- httr::GET(daily_url_2024,add_headers( "token" = "faXCJntxwbKXOeuoFQazeGxtGykRnsQm"
+daily_raw_24 <- httr::GET(daily_url_2024,add_headers( "token" = wxToken
 ) )
 
 daily_content_24 <- content(daily_raw_24)
@@ -150,7 +158,7 @@ daily_url_2025 <- "https://www.ncei.noaa.gov/cdo-web/api/v2/data/?datasetid=GHCN
 
 
 
-daily_raw_25 <- httr::GET(daily_url_2025,add_headers( "token" = "faXCJntxwbKXOeuoFQazeGxtGykRnsQm"
+daily_raw_25 <- httr::GET(daily_url_2025,add_headers( "token" = wxToken
 ) )
 
 daily_content_25 <- content(daily_raw_25)
