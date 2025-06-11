@@ -11,7 +11,7 @@ jobs:
   create_report:
     runs-on: ubuntu-latest
     env:
-       WX_KEY: ${{ secrets.WX_KEY }}
+       WXTOKEN: ${{ secrets.WXTOKEN }}
 
     steps:
     - uses: actions/checkout@v4
