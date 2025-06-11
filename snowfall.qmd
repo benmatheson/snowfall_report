@@ -1,11 +1,14 @@
 ---
-title: "❄️ Anchorage Snowfall"
+title: "❄📊️ Anchorage Snowfall"
 format: 
   html:
     toc: true
     embed-resources: true
     theme: zephyr
 date: "`r Sys.Date()`"
+execute: 
+  warning: false
+
 
 ---
 
@@ -258,26 +261,23 @@ latest_date <- max(snow$date)
 ## top 10 winters
 
 
-snow_summary <- snow %>% group_by(winter_season) %>%  summarize(max_cumulative = max(snow_rolling), min_cumulative = min(snow_rolling)) %>% ungroup()
+snow_summary <- snow %>% group_by(winter_season) %>%  summarize(max_cumulative = max(snow_rolling), min_cumulative = min(snow_rolling), decade = first(decade)) %>% ungroup()
 
 
 snow_top_10 <- snow_summary %>% top_n(10, max_cumulative) %>% arrange(-max_cumulative)
 
-snow_smallest_10 <- snow_summary %>% slice_min( min_cumulative, n=10) %>% arrange(min_cumulative)
+snow_smallest_10 <- snow_summary %>% top_n(10, -max_cumulative) %>% arrange(-max_cumulative)
+
+# snow_smallest_10 <- snow_summary %>% slice_min( order_by=min_cumulative, n=10) %>% arrange(min_cumulative)
 
 ```
 
 
-The latest date in the snow data is `r paste0(latest_date)`
-This report was run `r today()`
+<!-- The latest date in the snow data is `r paste0(latest_date)` -->
 
-```{r}
-kable(snow_top_10)
-kable(snow_smallest_10)
+📅This report was run `r today()`. 
 
-```
-
-
+🔗The source of the snowfall data is the *[NOAA Nation Centers for Environmental Information](https://www.ncei.noaa.gov/cdo-web/)* Climate Data Online (CDO) page. The site is shown here is Ted Stevens Anchorage International Airport. 
 
 ## 2024-2025 in Anchorage cumulative snowfall compared to winters since 1952.
 
@@ -291,11 +291,62 @@ ggplot(snow %>% filter(month!= 99))+
   theme_minimal()
 
 ```
-## Interactive Plot
+
+
+
+## 2024-2025 in Anchorage cumulative snowfall compared to winters since 1952 - Distribution
+
+```{r}
+
+ggplot(snow_summary)+
+  geom_histogram(aes(x=max_cumulative, show.legend = F))+
+  # gghighlight(winter_season == '2023-2024')+
+  gghighlight(winter_season == '2024-2025')+
+  theme_minimal()
+
+  # ggtitle("Winter 2024-2025")+
+
+```
+
+
+```{r}
+
+ggplot(snow_summary)+
+  geom_histogram(aes(x=max_cumulative, show.legend = F))+
+  # gghighlight(winter_season == '2023-2024')+
+  gghighlight(winter_season == '2024-2025')+
+  theme_minimal()+
+  facet_wrap(~decade)
+
+```
+
+
+
+## Largest Top 10 Years of Snowfall
+
+
+```{r}
+kable(snow_top_10)
+
+```
+## Smallest Top 10 Years of Snowfall
+
+```{r}
+kable(snow_smallest_10)
+
+```
+
+
+
+
+
+
+
+## Anchorage cumulative snowfall compared to winters since 1952 - Interactive Plot
 ```{r}
 
 all_years_plot <- ggplot(snow %>% filter(month!= 5))+
-  geom_line(aes(x=snow_year_day_dt, y=snow_rolling, group=winter_season, color=factor(decade)), show.legend = F)+
+  geom_line(aes(x=snow_year_day_dt, y=snow_rolling, group=winter_season), show.legend = F, color="gray")+
   theme_minimal()+
   theme(legend.position='none') 
 
@@ -305,15 +356,27 @@ ggplotly(all_years_plot, tooltip = c("snow_year_day_dt", "snow_rolling", "winter
 ```
 
 
+## Snow Day Patterns 2023-2024 and 2024-2025
+
+```{r}
 
 
-## 2023-2024 Anchorage snow depth compared to winters since 1952.
+
+ggplot()+
+  geom_col(data = snow %>% filter(winter_season %in% c("2024-2025", "2023-2024")), aes(x=snow_year_day_dt, y=snow, fill=winter_season))+ facet_wrap(~winter_season, ncol=1)+
+  theme_minimal()
+
+```
+
+
+
+## 2024-2025 Anchorage snow depth compared to winters since 1952.
 
 ```{r}
 
 ggplot(snow)+
   geom_line(aes(x=snow_year_day_dt, y=snwd, group=winter_season, color=winter_season), show.legend = F)+
-    gghighlight(winter_season == '2023-2024')+
+    gghighlight(winter_season == '2024-2025')+
   theme_minimal()+
    scale_color_brewer(palette = "Dark2")
 
@@ -321,13 +384,13 @@ ggplot(snow)+
 
 
 
-## 2023-2024 Anchorage snow depth by decades since 1952.
+<!-- ## 2023-2024 Anchorage snow depth by decades since 1952. -->
 
 ```{r}
 
-ggplot(snow %>% filter(month!= 5))+
-  geom_line(aes(x=snow_year_day_dt, y=snow_rolling, group=winter_season, color=decade), show.legend = F)+
-  theme_minimal()
+# ggplot(snow %>% filter(month!= 5))+
+  # geom_line(aes(x=snow_year_day_dt, y=snow_rolling, group=winter_season, color=decade), show.legend = F)+
+  # theme_minimal()
   # scale_color_brewer(palette = "PuBu")
 
 ```
@@ -347,13 +410,13 @@ ggplot(snow %>% filter (winter_season %in% snow_top_10$winter_season))+
 
 
 
-## Decade Facets 
+## Cumulative Snowfall- Decade Facets 
 
 ```{r}
 
 ggplot(snow %>% filter(month!= 5))+
-  geom_line(aes(x=snow_year_day_dt, y=snow_rolling, group=winter_season, color=decade), show.legend = F)+
-  theme_minimal()+
-  facet_wrap(~decade)
+  geom_line(aes(x=snow_year_day_dt, y=snow_rolling, group=winter_season, color=factor(decade)), show.legend = F)+
+  facet_wrap(~decade)+
+  theme_minimal()
 
 ```
